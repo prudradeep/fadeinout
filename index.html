@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crossfade Audio Transition with Auto Playlist</title>
+</head>
+<body>
+
+<audio id="audio1" controls style="display: none;">
+  Your browser does not support the audio tag.
+</audio>
+
+<audio id="audio2" controls style="display: none;">
+  Your browser does not support the audio tag.
+</audio>
+
+<div style="height: 100vh;
+display: flex;
+justify-content: space-around;
+align-items: center;
+flex-direction: column;">
+  <span style="border: 1px solid #000;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 60px;
+  cursor: pointer;" id="play">Play</span>
+  <span style="border: 1px solid #000;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 60px;
+  cursor: pointer;" id="next">Next</span>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var audio1 = document.getElementById('audio1');
+    var audio2 = document.getElementById('audio2');
+    var audioSelector = document.getElementById('audioSelector');
+    var progressBarFill = document.getElementById('progressBarFill');
+    var crossfadeDuration = 3; // Crossfade duration in seconds
+    var fadeInterval = 2;
+    var playlist = ["audio.mp3", "audio2.mp3","audio3.mp3", "audio4.mp3","audio5.mp3", "audio6.mp3","audio7.mp3", "audio8.mp3"]; // Add more audio files to the playlist
+
+    var currentTrackIndex = 0; // Index of the current track in the playlist
+    var currentAudio = audio1.paused ? audio2 : audio1;
+    var nextAudio = audio1.paused ? audio1 : audio2;
+    
+    function changeAudioSource() {
+      var selectedAudio = playlist[currentTrackIndex];
+
+      // Determine which audio element is currently playing
+      currentAudio = audio1.paused ? audio2 : audio1;
+      nextAudio = audio1.paused ? audio1 : audio2;
+
+      // Set the volume of the next audio to 0
+      nextAudio.volume = 0;
+
+      // Load the new audio source
+      nextAudio.src = selectedAudio;
+      nextAudio.load();
+
+      // Play the next audio
+      nextAudio.play();
+
+      // Fade in the next audio
+      fadeIn(nextAudio);
+
+      // Fade out the current audio
+      fadeOut(currentAudio);
+
+      // Move to the next track in the playlist
+      currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    }
+
+    audio1.addEventListener('loadedmetadata', function() {
+        console.log(currentTrackIndex, nextAudio.duration)
+        // Schedule the next auto change
+        setTimeout(changeAudioSource, (30)*1000);
+      });
+    audio2.addEventListener('loadedmetadata', function() {
+      console.log(currentTrackIndex, nextAudio.duration)
+      // Schedule the next auto change
+      setTimeout(changeAudioSource, (30)*1000);
+    });
+
+    function fadeIn(audioElement) {
+      audioElement.volume = 0;
+      var fadeDuration = crossfadeDuration * 1000;
+      var currentTime = 0;
+
+      var fadeFunction = setInterval(function () {
+        currentTime += fadeInterval;
+        audioElement.volume = currentTime / fadeDuration;
+
+        if (currentTime >= fadeDuration) {
+          clearInterval(fadeFunction);
+          audioElement.volume = 1;
+        }
+      }, fadeInterval);
+    }
+
+    function fadeOut(audioElement) {
+      var fadeDuration = crossfadeDuration * 1000;
+      var currentTime = fadeDuration;
+      var initialVolume = audioElement.volume;
+
+      var fadeFunction = setInterval(function () {
+        currentTime -= fadeInterval;
+        audioElement.volume = (currentTime / fadeDuration) * initialVolume;
+
+        if (currentTime <= 0) {
+          clearInterval(fadeFunction);
+          audioElement.volume = 0;
+          audioElement.pause();
+        }
+      }, fadeInterval);
+    }
+
+    /* setTimeout(function(){
+      changeAudioSource();
+    }, 3000) */
+    document.getElementById("play").addEventListener('click', changeAudioSource);
+    document.getElementById("next").addEventListener('click', changeAudioSource);
+  });
+</script>
+
+</body>
+</html>

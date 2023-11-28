@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Audio Crossfade</title>
+</head>
+<body>
+
+<audio id="audio1" controls>
+  <source src="audio.mp3" type="audio/mp3">
+  Your browser does not support the audio element.
+</audio>
+
+<audio id="audio2" controls>
+  <source src="audio2.mp3" type="audio/mp3">
+  Your browser does not support the audio element.
+</audio>
+
+<script>
+  window.addEventListener('load', function () {
+    const audio1 = document.getElementById('audio1');
+    const audio2 = document.getElementById('audio2');
+
+    // Set up a crossfade duration in seconds
+    const crossfadeDuration = 5;
+
+    // Event listener for when the user manually changes the audio
+    audio1.addEventListener('play', function () {
+      crossfade(audio2, audio1, crossfadeDuration);
+    });
+
+    audio2.addEventListener('play', function () {
+      crossfade(audio1, audio2, crossfadeDuration);
+    });
+
+    function crossfade(audioOut, audioIn, duration) {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const gainNodeOut = audioContext.createGain();
+      const gainNodeIn = audioContext.createGain();
+
+      const sourceOut = audioContext.createMediaElementSource(audioOut);
+      const sourceIn = audioContext.createMediaElementSource(audioIn);
+
+      sourceOut.connect(gainNodeOut);
+      sourceIn.connect(gainNodeIn);
+
+      gainNodeOut.connect(audioContext.destination);
+      gainNodeIn.connect(audioContext.destination);
+
+      // Fade out the current audio
+      gainNodeOut.gain.setValueAtTime(1, audioContext.currentTime);
+      gainNodeOut.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+
+      // Fade in the new audio
+      gainNodeIn.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNodeIn.gain.linearRampToValueAtTime(1, audioContext.currentTime + duration);
+
+      // Start playing the new audio
+      audioIn.play();
+
+      // Clean up nodes after the crossfade is complete
+      setTimeout(function () {
+        audioOut.pause();
+        audioOut.currentTime = 0;
+        gainNodeOut.disconnect();
+        gainNodeIn.disconnect();
+      }, duration * 1000);
+    }
+  });
+</script>
+
+</body>
+</html>
